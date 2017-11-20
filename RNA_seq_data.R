@@ -33,5 +33,38 @@ wget --ftp-user=20171106F17FTSEUHT1267 ftp://20171106F17FTSEUHT1267:MOUgmkE@cdts
 ###TV2_4_1.fq:md5sum -c "17dc9300efb4d2fd2965493a3c1dc803 latest/Clean_Data/TV2_4_1.fq.gz"
 ###TV2_4_2.fq:md5sum -c "6f2fd3aded15ec908bea05558c00ff49 latest/Clean_Data/TV2_4_2.fq.gz"
 
+####################################################################################################
+###############################20/11/2017###############################################
 
-  
+#Fastq to samples with parallel-####
+
+#--------------------------------#
+#------------- SBATCH File Step 1 -  FASTQ and check quality ####
+#--------------------------------#
+
+#!/bin/bash
+#SBATCH --job-name=Par_fastq
+#SBATCH --time=3:00:00
+#SBATCH --mem=40G
+#SBATCH --nodes=1
+#SBATCH --ntasks=12
+#SBATCH --cpus-per-task=1
+#SBATCH --workdir=/mnt/beegfs/scratch/JBARATA/anasofiamoreira/MasterAnaS/latest
+
+### ----------------------------------------------------------- INPUTS --------------------------------------------- ###
+export wk=$SLURM_SUBMIT_DIR ## working directory
+
+##export directories in clean_data
+export Clean_Data=$wk/Clean_data
+export fastqc = $wk/Clean_Data/fastqc
+
+
+srun="srun -N1 -n1"
+parallel="parallel --delay 0.2 -j $SLURM_NTASKS --joblog/mnt/beegfs/scratch/JBARATA/anasofiamoreira/MasterAnaS/latest/$SLURM_JOB_ID.log"
+
+## Check the quality of the reads with fastqc
+time ls $Clean_Data/*.fq | $parallel '$srun shifter --image=argrosso/htspreprocessing:0.1.1 fastqc {} -o $fastqc_dir'
+
+echo "Statistics for job $SLURM_JOB_ID:"
+sacct --format="JOBID,Start,End,Elapsed,AllocCPUs,CPUTime,AveDiskRead,AveDiskWrite,MaxRSS,MaxVMSize,exitcode,derivedexitcode" -j $SLURM_JOB_ID
+
